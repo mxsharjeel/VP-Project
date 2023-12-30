@@ -18,10 +18,16 @@ import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
-
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.GridPane;
+import javafx.scene.chart.XYChart;
+import javafx.scene.image.Image;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
+import javafx.scene.control.Alert;
+import java.sql.Statement;
+
 
 
 
@@ -190,13 +196,13 @@ public class mainFormController implements Initializable {
     private BarChart<?, ?> dashboard_CustomerChart;
     
   
-    
+   
     private Connection connect;
     private PreparedStatement prepare;
   
     private ResultSet result;
  
-    
+    //Retrieves counts of records (receipts) from database and display it on dashboard
     public void dashboardDisplayNC() {
         
         String sql = "SELECT COUNT(id) FROM receipt";
@@ -216,7 +222,7 @@ public class mainFormController implements Initializable {
         }
         
     }
-    
+    //calculates the total income for the current date and displays it on the dashboard.
     public void dashboardDisplayTI() {
         Date date = new Date();
         java.sql.Date sqlDate = new java.sql.Date(date.getTime());
@@ -242,15 +248,78 @@ public class mainFormController implements Initializable {
         }
     }
    
+    //Retrieves the count of records (customers) and displays the count on the dashboard.
+    public void dashboardNSP() {
+        
+        String sql = "SELECT COUNT(quantity) FROM customer";
+        
+        connect = database.connectDB();
+        
+        try {
+            int q = 0;
+            prepare = connect.prepareStatement(sql);
+            result = prepare.executeQuery();
+            
+            if (result.next()) {
+                q = result.getInt("COUNT(quantity)");
+            }
+            dashboard_NSP.setText(String.valueOf(q));
+            
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+    //Populates an area chart (dashboard_incomeChart) with data representing the total income over different dates.
+    public void dashboardIncomeChart() {
+        dashboard_incomeChart.getData().clear();
+        
+        String sql = "SELECT date, SUM(total) FROM receipt GROUP BY date ORDER BY TIMESTAMP(date)";
+        connect = database.connectDB();
+        XYChart.Series chart = new XYChart.Series();
+        try {
+            prepare = connect.prepareStatement(sql);
+            result = prepare.executeQuery();
+            
+            while (result.next()) {
+                chart.getData().add(new XYChart.Data<>(result.getString(1), result.getFloat(2)));
+            }
+            
+            dashboard_incomeChart.getData().add(chart);
+            
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+    //Populates a bar chart (dashboard_CustomerChart) with data representing the count of receipts over different dates.
+    public void dashboardCustomerChart(){
+        dashboard_CustomerChart.getData().clear();
+        
+        String sql = "SELECT date, COUNT(id) FROM receipt GROUP BY date ORDER BY TIMESTAMP(date)";
+        connect = database.connectDB();
+        XYChart.Series chart = new XYChart.Series();
+        try {
+            prepare = connect.prepareStatement(sql);
+            result = prepare.executeQuery();
+            
+            while (result.next()) {
+                chart.getData().add(new XYChart.Data<>(result.getString(1), result.getInt(2)));
+            }
+            
+            dashboard_CustomerChart.getData().add(chart);
+            
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+    
     @Override
-    public void initialize(URL location, ResourceBundle resources) {
-        
-        
-        
+    public void initialize(URL location, ResourceBundle resources) 
+    {    
         dashboardDisplayNC();
         dashboardDisplayTI();
-        
-        
+        dashboardNSP();
+        dashboardIncomeChart();
+        dashboardCustomerChart();
     }
     
 }
