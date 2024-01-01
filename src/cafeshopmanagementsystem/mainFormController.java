@@ -1,6 +1,5 @@
 package cafeshopmanagementsystem;
 
-
 import java.io.File;
 import java.net.URL;
 import java.sql.Connection;
@@ -9,19 +8,24 @@ import java.sql.ResultSet;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
 import java.util.ResourceBundle;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
 import javafx.geometry.Insets;
+import javafx.scene.Parent;
+import javafx.scene.Scene;
 import javafx.scene.chart.AreaChart;
 import javafx.scene.chart.BarChart;
 import javafx.scene.chart.XYChart;
 import javafx.scene.control.Alert;
+import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.Button;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.ComboBox;
@@ -36,6 +40,15 @@ import javafx.scene.image.ImageView;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.GridPane;
 import javafx.stage.FileChooser;
+import javafx.stage.FileChooser.ExtensionFilter;
+import javafx.stage.Stage;
+import net.sf.jasperreports.engine.JasperCompileManager;
+import net.sf.jasperreports.engine.JasperFillManager;
+import net.sf.jasperreports.engine.JasperPrint;
+import net.sf.jasperreports.engine.JasperReport;
+import net.sf.jasperreports.engine.design.JasperDesign;
+import net.sf.jasperreports.engine.xml.JRXmlLoader;
+import net.sf.jasperreports.view.JasperViewer;
 
 
 public class mainFormController implements Initializable {
@@ -202,17 +215,17 @@ public class mainFormController implements Initializable {
     @FXML
     private BarChart<?, ?> dashboard_CustomerChart;
     
-  
-   
-   private Alert alert;
+    private Alert alert;
+    
     private Connection connect;
     private PreparedStatement prepare;
     private Statement statement;
     private ResultSet result;
+    
     private Image image;
+    
     private ObservableList<productData> cardListData = FXCollections.observableArrayList();
- 
-    //Retrieves counts of records (receipts) from database and display it on dashboard
+    
     public void dashboardDisplayNC() {
         
         String sql = "SELECT COUNT(id) FROM receipt";
@@ -232,7 +245,7 @@ public class mainFormController implements Initializable {
         }
         
     }
-    //calculates the total income for the current date and displays it on the dashboard.
+    
     public void dashboardDisplayTI() {
         Date date = new Date();
         java.sql.Date sqlDate = new java.sql.Date(date.getTime());
@@ -257,8 +270,27 @@ public class mainFormController implements Initializable {
             e.printStackTrace();
         }
     }
-   
-    //Retrieves the count of records (customers) and displays the count on the dashboard.
+    
+    public void dashboardTotalI() {
+        String sql = "SELECT SUM(total) FROM receipt";
+        
+        connect = database.connectDB();
+        
+        try {
+            float ti = 0;
+            prepare = connect.prepareStatement(sql);
+            result = prepare.executeQuery();
+            
+            if (result.next()) {
+                ti = result.getFloat("SUM(total)");
+            }
+            dashboard_TotalI.setText("$" + ti);
+            
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+    
     public void dashboardNSP() {
         
         String sql = "SELECT COUNT(quantity) FROM customer";
@@ -279,7 +311,7 @@ public class mainFormController implements Initializable {
             e.printStackTrace();
         }
     }
-    //Populates an area chart (dashboard_incomeChart) with data representing the total income over different dates.
+    
     public void dashboardIncomeChart() {
         dashboard_incomeChart.getData().clear();
         
@@ -300,7 +332,7 @@ public class mainFormController implements Initializable {
             e.printStackTrace();
         }
     }
-    //Populates a bar chart (dashboard_CustomerChart) with data representing the count of receipts over different dates.
+    
     public void dashboardCustomerChart(){
         dashboard_CustomerChart.getData().clear();
         
@@ -322,7 +354,7 @@ public class mainFormController implements Initializable {
         }
     }
     
-     public void inventoryAddBtn() {
+    public void inventoryAddBtn() {
         
         if (inventory_productID.getText().isEmpty()
                 || inventory_productName.getText().isEmpty()
@@ -332,7 +364,7 @@ public class mainFormController implements Initializable {
                 || inventory_status.getSelectionModel().getSelectedItem() == null
                 || data.path == null) {
             
-            alert = new Alert(Alert.AlertType.ERROR);
+            alert = new Alert(AlertType.ERROR);
             alert.setTitle("Error Message");
             alert.setHeaderText(null);
             alert.setContentText("Please fill all blank fields");
@@ -352,7 +384,7 @@ public class mainFormController implements Initializable {
                 result = statement.executeQuery(checkProdID);
                 
                 if (result.next()) {
-                    alert = new Alert(Alert.AlertType.ERROR);
+                    alert = new Alert(AlertType.ERROR);
                     alert.setTitle("Error Message");
                     alert.setHeaderText(null);
                     alert.setContentText(inventory_productID.getText() + " is already taken");
@@ -383,7 +415,7 @@ public class mainFormController implements Initializable {
                     
                     prepare.executeUpdate();
                     
-                    alert = new Alert(Alert.AlertType.INFORMATION);
+                    alert = new Alert(AlertType.INFORMATION);
                     alert.setTitle("Error Message");
                     alert.setHeaderText(null);
                     alert.setContentText("Successfully Added!");
@@ -409,7 +441,7 @@ public class mainFormController implements Initializable {
                 || inventory_status.getSelectionModel().getSelectedItem() == null
                 || data.path == null || data.id == 0) {
             
-            alert = new Alert(Alert.AlertType.ERROR);
+            alert = new Alert(AlertType.ERROR);
             alert.setTitle("Error Message");
             alert.setHeaderText(null);
             alert.setContentText("Please fill all blank fields");
@@ -434,7 +466,7 @@ public class mainFormController implements Initializable {
             
             try {
                 
-                alert = new Alert(Alert.AlertType.CONFIRMATION);
+                alert = new Alert(AlertType.CONFIRMATION);
                 alert.setTitle("Error Message");
                 alert.setHeaderText(null);
                 alert.setContentText("Are you sure you want to UPDATE PRoduct ID: " + inventory_productID.getText() + "?");
@@ -444,7 +476,7 @@ public class mainFormController implements Initializable {
                     prepare = connect.prepareStatement(updateData);
                     prepare.executeUpdate();
                     
-                    alert = new Alert(Alert.AlertType.INFORMATION);
+                    alert = new Alert(AlertType.INFORMATION);
                     alert.setTitle("Error Message");
                     alert.setHeaderText(null);
                     alert.setContentText("Successfully Updated!");
@@ -455,7 +487,7 @@ public class mainFormController implements Initializable {
                     // TO CLEAR YOUR FIELDS
                     inventoryClearBtn();
                 } else {
-                    alert = new Alert(Alert.AlertType.ERROR);
+                    alert = new Alert(AlertType.ERROR);
                     alert.setTitle("Error Message");
                     alert.setHeaderText(null);
                     alert.setContentText("Cancelled.");
@@ -470,14 +502,14 @@ public class mainFormController implements Initializable {
     public void inventoryDeleteBtn() {
         if (data.id == 0) {
             
-            alert = new Alert(Alert.AlertType.ERROR);
+            alert = new Alert(AlertType.ERROR);
             alert.setTitle("Error Message");
             alert.setHeaderText(null);
             alert.setContentText("Please fill all blank fields");
             alert.showAndWait();
             
         } else {
-            alert = new Alert(Alert.AlertType.CONFIRMATION);
+            alert = new Alert(AlertType.CONFIRMATION);
             alert.setTitle("Error Message");
             alert.setHeaderText(null);
             alert.setContentText("Are you sure you want to DELETE Product ID: " + inventory_productID.getText() + "?");
@@ -489,7 +521,7 @@ public class mainFormController implements Initializable {
                     prepare = connect.prepareStatement(deleteData);
                     prepare.executeUpdate();
                     
-                    alert = new Alert(Alert.AlertType.ERROR);
+                    alert = new Alert(AlertType.ERROR);
                     alert.setTitle("Error Message");
                     alert.setHeaderText(null);
                     alert.setContentText("successfully Deleted!");
@@ -504,7 +536,7 @@ public class mainFormController implements Initializable {
                     e.printStackTrace();
                 }
             } else {
-                alert = new Alert(Alert.AlertType.ERROR);
+                alert = new Alert(AlertType.ERROR);
                 alert.setTitle("Error Message");
                 alert.setHeaderText(null);
                 alert.setContentText("Cancelled");
@@ -531,7 +563,7 @@ public class mainFormController implements Initializable {
     public void inventoryImportBtn() {
         
         FileChooser openFile = new FileChooser();
-        openFile.getExtensionFilters().add(new FileChooser.ExtensionFilter("Open Image File", "*png", "*jpg"));
+        openFile.getExtensionFilters().add(new ExtensionFilter("Open Image File", "*png", "*jpg"));
         
         File file = openFile.showOpenDialog(main_form.getScene().getWindow());
         
@@ -815,7 +847,7 @@ public class mainFormController implements Initializable {
     public void menuAmount() {
         menuGetTotal();
         if (menu_amount.getText().isEmpty() || totalP == 0) {
-            alert = new Alert(Alert.AlertType.ERROR);
+            alert = new Alert(AlertType.ERROR);
             alert.setTitle("Error Message");
             alert.setHeaderText(null);
             alert.setContentText("Invalid :3");
@@ -834,7 +866,7 @@ public class mainFormController implements Initializable {
     public void menuPayBtn() {
         
         if (totalP == 0) {
-            alert = new Alert(Alert.AlertType.ERROR);
+            alert = new Alert(AlertType.ERROR);
             alert.setTitle("Error Message");
             alert.setHeaderText(null);
             alert.setContentText("Please choose your order first!");
@@ -849,13 +881,13 @@ public class mainFormController implements Initializable {
             try {
                 
                 if (amount == 0) {
-                    alert = new Alert(Alert.AlertType.ERROR);
+                    alert = new Alert(AlertType.ERROR);
                     alert.setTitle("Error Messaged");
                     alert.setHeaderText(null);
                     alert.setContentText("Something wrong :3");
                     alert.showAndWait();
                 } else {
-                    alert = new Alert(Alert.AlertType.CONFIRMATION);
+                    alert = new Alert(AlertType.CONFIRMATION);
                     alert.setTitle("Confirmation Message");
                     alert.setHeaderText(null);
                     alert.setContentText("Are you sure?");
@@ -876,7 +908,7 @@ public class mainFormController implements Initializable {
                         
                         prepare.executeUpdate();
                         
-                        alert = new Alert(Alert.AlertType.INFORMATION);
+                        alert = new Alert(AlertType.INFORMATION);
                         alert.setTitle("Infomation Message");
                         alert.setHeaderText(null);
                         alert.setContentText("Successful.");
@@ -885,7 +917,7 @@ public class mainFormController implements Initializable {
                         menuShowOrderData();
                         
                     } else {
-                        alert = new Alert(Alert.AlertType.WARNING);
+                        alert = new Alert(AlertType.WARNING);
                         alert.setTitle("Infomation Message");
                         alert.setHeaderText(null);
                         alert.setContentText("Cancelled.");
@@ -903,7 +935,7 @@ public class mainFormController implements Initializable {
     public void menuRemoveBtn() {
         
         if (getid == 0) {
-            alert = new Alert(Alert.AlertType.ERROR);
+            alert = new Alert(AlertType.ERROR);
             alert.setTitle("Error Message");
             alert.setHeaderText(null);
             alert.setContentText("Please select the order you want to remove");
@@ -912,7 +944,7 @@ public class mainFormController implements Initializable {
             String deleteData = "DELETE FROM customer WHERE id = " + getid;
             connect = database.connectDB();
             try {
-                alert = new Alert(Alert.AlertType.CONFIRMATION);
+                alert = new Alert(AlertType.CONFIRMATION);
                 alert.setTitle("Confirmation Message");
                 alert.setHeaderText(null);
                 alert.setContentText("Are you sure you want to delete this order?");
@@ -931,11 +963,217 @@ public class mainFormController implements Initializable {
         }
     }
     
+    public void menuReceiptBtn() {
+        
+        if (totalP == 0 || menu_amount.getText().isEmpty()) {
+            alert = new Alert(AlertType.ERROR);
+            alert.setTitle("Error Message");
+            alert.setContentText("Please order first");
+            alert.showAndWait();
+        } else {
+            HashMap map = new HashMap();
+            map.put("getReceipt", (cID - 1));
+            
+            try {
+                
+                JasperDesign jDesign = JRXmlLoader.load("C:\\Users\\PMLS\\Documents\\my-project\\cafeShopManagementSystem\\src\\cafeshopmanagementsystem\\report.jrxml");
+                JasperReport jReport = JasperCompileManager.compileReport(jDesign);
+                JasperPrint jPrint = JasperFillManager.fillReport(jReport, map, connect);
+                
+                JasperViewer.viewReport(jPrint, false);
+                
+                menuRestart();
+                
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            
+        }
+        
+    }
+    
+    public void menuRestart() {
+        totalP = 0;
+        change = 0;
+        amount = 0;
+        menu_total.setText("$0.0");
+        menu_amount.setText("");
+        menu_change.setText("$0.0");
+    }
+    
+    private int cID;
+    
+    public void customerID() {
+        
+        String sql = "SELECT MAX(customer_id) FROM customer";
+        connect = database.connectDB();
+        
+        try {
+            prepare = connect.prepareStatement(sql);
+            result = prepare.executeQuery();
+            
+            if (result.next()) {
+                cID = result.getInt("MAX(customer_id)");
+            }
+            
+            String checkCID = "SELECT MAX(customer_id) FROM receipt";
+            prepare = connect.prepareStatement(checkCID);
+            result = prepare.executeQuery();
+            int checkID = 0;
+            if (result.next()) {
+                checkID = result.getInt("MAX(customer_id)");
+            }
+            
+            if (cID == 0) {
+                cID += 1;
+            } else if (cID == checkID) {
+                cID += 1;
+            }
+            
+            data.cID = cID;
+            
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+    
+    public ObservableList<customersData> customersDataList() {
+        
+        ObservableList<customersData> listData = FXCollections.observableArrayList();
+        String sql = "SELECT * FROM receipt";
+        connect = database.connectDB();
+        
+        try {
+            
+            prepare = connect.prepareStatement(sql);
+            result = prepare.executeQuery();
+            customersData cData;
+            
+            while (result.next()) {
+                cData = new customersData(result.getInt("id"),
+                        result.getInt("customer_id"),
+                        result.getDouble("total"),
+                        result.getDate("date"),
+                        result.getString("em_username"));
+                
+                listData.add(cData);
+            }
+            
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return listData;
+    }
+    
+    private ObservableList<customersData> customersListData;
+    
+    public void customersShowData() {
+        customersListData = customersDataList();
+        
+        customers_col_customerID.setCellValueFactory(new PropertyValueFactory<>("customerID"));
+        customers_col_total.setCellValueFactory(new PropertyValueFactory<>("total"));
+        customers_col_date.setCellValueFactory(new PropertyValueFactory<>("date"));
+        customers_col_cashier.setCellValueFactory(new PropertyValueFactory<>("emUsername"));
+        
+        customers_tableView.setItems(customersListData);
+    }
+    
+    public void switchForm(ActionEvent event) {
+        
+        if (event.getSource() == dashboard_btn) {
+            dashboard_form.setVisible(true);
+            inventory_form.setVisible(false);
+            menu_form.setVisible(false);
+            customers_form.setVisible(false);
+            
+            dashboardDisplayNC();
+            dashboardDisplayTI();
+            dashboardTotalI();
+            dashboardNSP();
+            dashboardIncomeChart();
+            dashboardCustomerChart();
+            
+        } else if (event.getSource() == inventory_btn) {
+            dashboard_form.setVisible(false);
+            inventory_form.setVisible(true);
+            menu_form.setVisible(false);
+            customers_form.setVisible(false);
+            
+            inventoryTypeList();
+            inventoryStatusList();
+            inventoryShowData();
+        } else if (event.getSource() == menu_btn) {
+            dashboard_form.setVisible(false);
+            inventory_form.setVisible(false);
+            menu_form.setVisible(true);
+            customers_form.setVisible(false);
+            
+            menuDisplayCard();
+            menuDisplayTotal();
+            menuShowOrderData();
+        } else if (event.getSource() == customers_btn) {
+            dashboard_form.setVisible(false);
+            inventory_form.setVisible(false);
+            menu_form.setVisible(false);
+            customers_form.setVisible(true);
+            
+            customersShowData();
+        }
+        
+    }
+
+
+    public void logout() {
+        
+        try {
+            
+            alert = new Alert(AlertType.CONFIRMATION);
+            alert.setTitle("Error Message");
+            alert.setHeaderText(null);
+            alert.setContentText("Are you sure you want to logout?");
+            Optional<ButtonType> option = alert.showAndWait();
+            
+            if (option.get().equals(ButtonType.OK)) {
+
+                // TO HIDE MAIN FORM 
+                logout_btn.getScene().getWindow().hide();
+
+                // LINK YOUR LOGIN FORM AND SHOW IT 
+                Parent root = FXMLLoader.load(getClass().getResource("FXMLDocument.fxml"));
+                
+                Stage stage = new Stage();
+                Scene scene = new Scene(root);
+                
+                stage.setTitle("Cafe Shop Management System");
+                
+                stage.setScene(scene);
+                stage.show();
+                
+            }
+            
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        
+    }
+    
+    public void displayUsername() {
+        
+        String user = data.username;
+        user = user.substring(0, 1).toUpperCase() + user.substring(1);
+        
+        username.setText(user);
+        
+    }
+    
     @Override
-    public void initialize(URL location, ResourceBundle resources) 
-    {    
+    public void initialize(URL location, ResourceBundle resources) {
+        
+        displayUsername();
+        
         dashboardDisplayNC();
         dashboardDisplayTI();
+        dashboardTotalI();
         dashboardNSP();
         dashboardIncomeChart();
         dashboardCustomerChart();
@@ -948,6 +1186,9 @@ public class mainFormController implements Initializable {
         menuGetOrder();
         menuDisplayTotal();
         menuShowOrderData();
+        
+        customersShowData();
+        
     }
     
 }
