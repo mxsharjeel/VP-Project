@@ -76,7 +76,9 @@ WHERE
 				<textElement textAlignment="Center">
 					<font fontName="Comic Sans MS" isBold="true"/>
 				</textElement>
+                                
 				<text><![CDATA[Cafe Shop]]></text>
+
 			</staticText>
 			<staticText>
 				<reportElement x="112" y="0" width="45" height="9" uuid="68b441f6-5573-4b73-b5fe-a57a66ff218a"/>

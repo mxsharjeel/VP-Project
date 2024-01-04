@@ -862,76 +862,75 @@ public class mainFormController implements Initializable {
             }
         }
     }
-    
-   public void menuPayBtn() {
 
-    if (totalP == 0) {
-        alert = new Alert(AlertType.ERROR);
-        alert.setTitle("Error Message");
-        alert.setHeaderText(null);
-        alert.setContentText("Please choose your order first!");
-        alert.showAndWait();
-    } else {
-        menuGetTotal();
-        String insertPay = "INSERT INTO receipt (customer_id, total, date, em_username) "
-                + "VALUES(?,?,?,?)";
-
-        connect = database.connectDB();
-
-        try {
-
-            if (amount == 0 || amount < totalP) {
-                alert = new Alert(AlertType.ERROR);
-                alert.setTitle("Error Message");
-                alert.setHeaderText(null);
-                alert.setContentText("Please enter a valid amount greater than or equal to the total bill!");
-                alert.showAndWait();
-            } else {
-                alert = new Alert(AlertType.CONFIRMATION);
-                alert.setTitle("Confirmation Message");
-                alert.setHeaderText(null);
-                alert.setContentText("Are you sure?");
-                Optional<ButtonType> option = alert.showAndWait();
-
-                if (option.get().equals(ButtonType.OK)) {
-                    customerID();
-                    menuGetTotal();
-                    prepare = connect.prepareStatement(insertPay);
-                    prepare.setString(1, String.valueOf(cID));
-                    prepare.setString(2, String.valueOf(totalP));
-
-                    Date date = new Date();
-                    java.sql.Date sqlDate = new java.sql.Date(date.getTime());
-
-                    prepare.setDate(3, sqlDate);
-                    prepare.setString(4, data.username);
-
-                    prepare.executeUpdate();
-
-                    alert = new Alert(AlertType.INFORMATION);
-                    alert.setTitle("Information Message");
+    public void menuPayBtn() {
+        
+        if (totalP == 0) {
+            alert = new Alert(AlertType.ERROR);
+            alert.setTitle("Error Message");
+            alert.setHeaderText(null);
+            alert.setContentText("Please choose your order first!");
+            alert.showAndWait();
+        } else {
+            menuGetTotal();
+            String insertPay = "INSERT INTO receipt (customer_id, total, date, em_username) "
+                    + "VALUES(?,?,?,?)";
+            
+            connect = database.connectDB();
+            
+            try {
+                
+                if (amount == 0) {
+                    alert = new Alert(AlertType.ERROR);
+                    alert.setTitle("Error Messaged");
                     alert.setHeaderText(null);
-                    alert.setContentText("Payment Successful.");
+                    alert.setContentText("Something wrong :3");
                     alert.showAndWait();
-
-                    menuShowOrderData();
-
                 } else {
-                    alert = new Alert(AlertType.WARNING);
-                    alert.setTitle("Information Message");
+                    alert = new Alert(AlertType.CONFIRMATION);
+                    alert.setTitle("Confirmation Message");
                     alert.setHeaderText(null);
-                    alert.setContentText("Payment Cancelled.");
-                    alert.showAndWait();
+                    alert.setContentText("Are you sure?");
+                    Optional<ButtonType> option = alert.showAndWait();
+                    
+                    if (option.get().equals(ButtonType.OK)) {
+                        customerID();
+                        menuGetTotal();
+                        prepare = connect.prepareStatement(insertPay);
+                        prepare.setString(1, String.valueOf(cID));
+                        prepare.setString(2, String.valueOf(totalP));
+                        
+                        Date date = new Date();
+                        java.sql.Date sqlDate = new java.sql.Date(date.getTime());
+                        
+                        prepare.setString(3, String.valueOf(sqlDate));
+                        prepare.setString(4, data.username);
+                        
+                        prepare.executeUpdate();
+                        
+                        alert = new Alert(AlertType.INFORMATION);
+                        alert.setTitle("Infomation Message");
+                        alert.setHeaderText(null);
+                        alert.setContentText("Successful.");
+                        alert.showAndWait();
+                        
+                        menuShowOrderData();
+                        
+                    } else {
+                        alert = new Alert(AlertType.WARNING);
+                        alert.setTitle("Infomation Message");
+                        alert.setHeaderText(null);
+                        alert.setContentText("Cancelled.");
+                        alert.showAndWait();
+                    }
                 }
+                
+            } catch (Exception e) {
+                e.printStackTrace();
             }
-
-        } catch (Exception e) {
-            e.printStackTrace();
         }
+        
     }
-
-}
-
     
     public void menuRemoveBtn() {
         
