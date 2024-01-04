@@ -18,10 +18,7 @@ import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.AnchorPane;
 
-/**
- *
- * @author WINDOWS 10
- */
+
 public class cardProductController implements Initializable {
 
     @FXML
@@ -169,11 +166,6 @@ public class cardProductController implements Initializable {
 
                     int upStock = checkStck - qty;
 
-                    
-
-                    System.out.println("Date: " + prod_date);
-                    System.out.println("Image: " + prod_image);
-
                     String updateStock = "UPDATE product SET prod_name = '"
                             + prod_name.getText() + "', type = '"
                             + type + "', stock = " + upStock + ", price = " + pr
@@ -191,6 +183,7 @@ public class cardProductController implements Initializable {
                     alert.setHeaderText(null);
                     alert.setContentText("Successfully Added!");
                     alert.showAndWait();
+                    
                     
                     mForm.menuGetTotal();
                 }
